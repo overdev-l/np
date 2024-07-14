@@ -1,6 +1,7 @@
 package cmd
 
 import (
+	"fmt"
 	"github.com/spf13/cobra"
 	"np/util"
 	"os"
@@ -9,7 +10,7 @@ import (
 var packageJSON map[string]string
 
 var tag string
-var auto bool
+var version string
 
 var publishCmd = &cobra.Command{
 	Use:   "publish",
@@ -21,10 +22,30 @@ var publishCmd = &cobra.Command{
 		}
 		packageJSON = pkg
 	},
+	Run: func(cmd *cobra.Command, args []string) {
+		var currentVersion *util.Version
+		var stringVersion string
+		if version == "" {
+			stringVersion = version
+		} else {
+			stringVersion = packageJSON["version"]
+		}
+		parseVersion, err := util.ParseVersion(stringVersion)
+		if err != nil {
+			fmt.Printf("Error parsing version %s: %s\n", version, err)
+			os.Exit(1)
+		}
+		currentVersion = parseVersion
+		// 如果显式指定了版本号(--version)则 --tag 无效
+		// 指定了 --tag 才会自动增加 PreRelease的版本号
+		// 无 --tag 自动新增修订版本号
+		// 不需要自动新增则需显式 --version 指定版本号
+
+	},
 }
 
 func init() {
 	rootCmd.AddCommand(publishCmd)
 	publishCmd.Flags().StringVarP(&tag, "tag", "t", "", "Tag (alpha, beta, release) of the package to publish")
-	publishCmd.Flags().BoolVarP(&auto, "auto", "a", false, "Automatically generate an auto-generated package")
+	publishCmd.Flags().StringVarP(&version, "version", "v", "", "Version of the package to publish")
 }

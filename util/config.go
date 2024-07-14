@@ -4,15 +4,23 @@ import (
 	"bufio"
 	"encoding/json"
 	"fmt"
-	"io/ioutil"
 	"os"
 	"path/filepath"
+	"regexp"
 	"strings"
 )
 
 type PackageJSON struct {
 	Name    string `json:"name"`
 	Version string `json:"version"`
+}
+
+type Version struct {
+	Major            string // 主要版本
+	Minor            string // 次要版本
+	Patch            string // 修订版本
+	PreRelease       string // 预发布版本
+	PreReleaseNumber string // 预发布版本号
 }
 
 func NpConfig() error {
@@ -118,7 +126,7 @@ func WriteConfig(key, value string) error {
 }
 
 func GetPackageJSON() (map[string]string, error) {
-	fileContent, err := ioutil.ReadFile("package.json")
+	fileContent, err := os.ReadFile("package.json")
 	if err != nil {
 		fmt.Println(err)
 		return nil, err
@@ -132,4 +140,45 @@ func GetPackageJSON() (map[string]string, error) {
 	result := make(map[string]string)
 
 	return result, nil
+}
+
+func UpdatePackageVersion(value string) error {
+	fileContent, err := os.ReadFile("package.json")
+	if err != nil {
+		fmt.Println(err)
+		return err
+	}
+	var pkg PackageJSON
+	err = json.Unmarshal(fileContent, &pkg)
+	if err != nil {
+		fmt.Println(err)
+		return err
+	}
+	pkg.Version = value
+	updatedContent, err := json.MarshalIndent(pkg, "", "  ")
+	if err != nil {
+		fmt.Println(err)
+		return err
+	}
+	if err := os.WriteFile("package.json", updatedContent, 0644); err != nil {
+		return fmt.Errorf("error writing file: %w", err)
+	}
+	return nil
+}
+
+func ParseVersion(version string) (*Version, error) {
+	re := regexp.MustCompile(`^(\d+)\.(\d+)\.(\d+)(?:-(alpha|beta)\.(\d+))?$`)
+	matches := re.FindStringSubmatch(version)
+
+	if matches == nil {
+		return nil, fmt.Errorf("invalid version format")
+	}
+
+	return &Version{
+		Major:            matches[1],
+		Minor:            matches[2],
+		Patch:            matches[3],
+		PreRelease:       matches[4],
+		PreReleaseNumber: matches[5],
+	}, nil
 }
