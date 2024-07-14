@@ -2,11 +2,18 @@ package util
 
 import (
 	"bufio"
+	"encoding/json"
 	"fmt"
+	"io/ioutil"
 	"os"
 	"path/filepath"
 	"strings"
 )
+
+type PackageJSON struct {
+	Name    string `json:"name"`
+	Version string `json:"version"`
+}
 
 func NpConfig() error {
 	home, err := os.UserHomeDir()
@@ -108,4 +115,21 @@ func WriteConfig(key, value string) error {
 		return err
 	}
 	return nil
+}
+
+func GetPackageJSON() (map[string]string, error) {
+	fileContent, err := ioutil.ReadFile("package.json")
+	if err != nil {
+		fmt.Println(err)
+		return nil, err
+	}
+	var pkg PackageJSON
+	err = json.Unmarshal(fileContent, &pkg)
+	if err != nil {
+		fmt.Println(err)
+		return nil, err
+	}
+	result := make(map[string]string)
+
+	return result, nil
 }
