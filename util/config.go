@@ -5,8 +5,10 @@ import (
 	"encoding/json"
 	"fmt"
 	"os"
+	"os/exec"
 	"path/filepath"
 	"regexp"
+	"strconv"
 	"strings"
 )
 
@@ -16,11 +18,11 @@ type PackageJSON struct {
 }
 
 type Version struct {
-	Major            string // 主要版本
-	Minor            string // 次要版本
-	Patch            string // 修订版本
+	Major            int    // 主要版本
+	Minor            int    // 次要版本
+	Patch            int    // 修订版本
 	PreRelease       string // 预发布版本
-	PreReleaseNumber string // 预发布版本号
+	PreReleaseNumber int    // 预发布版本号
 }
 
 func NpConfig() error {
@@ -173,12 +175,55 @@ func ParseVersion(version string) (*Version, error) {
 	if matches == nil {
 		return nil, fmt.Errorf("invalid version format")
 	}
+	// 转换匹配到的字段
+	major, err := strconv.Atoi(matches[1])
+	if err != nil {
+		return nil, fmt.Errorf("error converting major version: %w", err)
+	}
 
+	minor, err := strconv.Atoi(matches[2])
+	if err != nil {
+		return nil, fmt.Errorf("error converting minor version: %w", err)
+	}
+
+	patch, err := strconv.Atoi(matches[3])
+	if err != nil {
+		return nil, fmt.Errorf("error converting patch version: %w", err)
+	}
+
+	preReleaseNumber := 0
+	if matches[5] != "" {
+		preReleaseNumber, err = strconv.Atoi(matches[5])
+		if err != nil {
+			return nil, fmt.Errorf("error converting pre-release number: %w", err)
+		}
+	}
 	return &Version{
-		Major:            matches[1],
-		Minor:            matches[2],
-		Patch:            matches[3],
+		Major:            major,
+		Minor:            minor,
+		Patch:            patch,
 		PreRelease:       matches[4],
-		PreReleaseNumber: matches[5],
+		PreReleaseNumber: preReleaseNumber,
 	}, nil
+}
+
+func (v *Version) IncrementPreRelease(tag string) {
+	if v.PreRelease == tag {
+		v.PreReleaseNumber++
+	} else {
+		v.PreRelease = tag
+		v.PreReleaseNumber = 1
+	}
+}
+
+func RunBuild() error {
+	cmd := exec.Command("npm", "run", "build")
+	output, err := cmd.CombinedOutput()
+	if err != nil {
+		fmt.Printf("Error: %s\n", err)
+		return err
+	}
+
+	fmt.Printf("Output:\n%s\n", output)
+	return nil
 }

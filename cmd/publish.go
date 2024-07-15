@@ -40,6 +40,24 @@ var publishCmd = &cobra.Command{
 		// 指定了 --tag 才会自动增加 PreRelease的版本号
 		// 无 --tag 自动新增修订版本号
 		// 不需要自动新增则需显式 --version 指定版本号
+		if version != "" {
+			err := util.UpdatePackageVersion(version)
+			if err != nil {
+				fmt.Printf("Error updating version %s: %s\n", version, err)
+				os.Exit(1)
+			}
+			err = util.RunBuild()
+			if err != nil {
+				fmt.Printf("Error building version %s: %s\n", version, err)
+				os.Exit(1)
+			}
+		} else {
+			if tag != "" {
+				currentVersion.IncrementPreRelease(tag)
+			} else {
+
+			}
+		}
 
 	},
 }
