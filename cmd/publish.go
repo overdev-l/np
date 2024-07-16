@@ -1,10 +1,12 @@
 package cmd
 
 import (
+	"bytes"
 	"fmt"
 	"github.com/spf13/cobra"
 	"np/util"
 	"os"
+	"os/exec"
 )
 
 var packageJSON map[string]string
@@ -75,7 +77,49 @@ var publishCmd = &cobra.Command{
 			fmt.Printf("Error adding version %s: %s\n", version, err)
 			os.Exit(1)
 		}
+		config, err := util.GetConfig()
+		if err != nil {
+			fmt.Printf("Error getting config: %s\n", err)
+			os.Exit(1)
+		}
+		if config["registry"] != "" {
+			cmd := exec.Command("npm", "config", "set", "registry", config["registry"])
+			_, err := cmd.CombinedOutput()
+			if err != nil {
+				fmt.Printf("Error adding version %s: %s\n", version, err)
+				os.Exit(1)
+			}
+		}
+		loginCommand := exec.Command("npm", "login")
+		var stdin bytes.Buffer
+		stdin.WriteString(fmt.Sprintf("%s\n%s\n%s\n", config["username"], config["password"], ""))
+		loginCommand.Stdin = &stdin
+		loginOutput, err := loginCommand.CombinedOutput()
+		if err != nil {
+			fmt.Printf("Error adding version %s: %s\n", version, err)
+			os.Exit(1)
+		}
+		fmt.Printf("%s\n", string(loginOutput))
 
+		if currentVersion.PreRelease != "" {
+			fmt.Printf("Pre-release version: %s\n", currentVersion.PreRelease)
+			publishCommand := exec.Command("npm", "publish", "--tag", currentVersion.PreRelease)
+			publishOutput, err := publishCommand.CombinedOutput()
+			if err != nil {
+				fmt.Printf("Error adding version %s: %s\n", version, err)
+				os.Exit(1)
+			}
+			fmt.Printf("%s\n", string(publishOutput))
+		} else {
+			fmt.Printf("No pre-release version specified.\n")
+			publishCommand := exec.Command("npm", "publish")
+			publishOutput, err := publishCommand.CombinedOutput()
+			if err != nil {
+				fmt.Printf("Error adding version %s: %s\n", version, err)
+				os.Exit(1)
+			}
+			fmt.Printf("%s\n", string(publishOutput))
+		}
 	},
 }
 
