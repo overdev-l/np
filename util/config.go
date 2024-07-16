@@ -216,6 +216,21 @@ func (v *Version) IncrementPreRelease(tag string) {
 	}
 }
 
+func (v *Version) UpdatePackageReleaseVersion(preReleaseVersion int) {
+	v.PreReleaseNumber = preReleaseVersion
+}
+
+func (v Version) String() string {
+	version := fmt.Sprintf("%d.%d.%d", v.Major, v.Minor, v.Patch)
+	if v.PreRelease != "" {
+		version += "-" + v.PreRelease
+		if v.PreReleaseNumber > 0 {
+			version += "." + strconv.Itoa(v.PreReleaseNumber)
+		}
+	}
+	return version
+}
+
 func RunBuild() error {
 	cmd := exec.Command("npm", "run", "build")
 	output, err := cmd.CombinedOutput()
@@ -226,4 +241,11 @@ func RunBuild() error {
 
 	fmt.Printf("Output:\n%s\n", output)
 	return nil
+}
+
+func RunCommand(command string, args ...string) error {
+	cmd := exec.Command(command, args...)
+	cmd.Stdout = os.Stdout
+	cmd.Stderr = os.Stderr
+	return cmd.Run()
 }
