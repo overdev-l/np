@@ -126,6 +126,6 @@ var publishCmd = &cobra.Command{
 func init() {
 	rootCmd.AddCommand(publishCmd)
 	publishCmd.Flags().StringVarP(&tag, "tag", "t", "", "Tag (alpha, beta, release) of the package to publish")
-	publishCmd.Flags().IntVarP(&preReleaseNumber, "preReleaseNumber", "pr", -1, "Number of pre-release versions to publish")
+	publishCmd.Flags().IntVarP(&preReleaseNumber, "preReleaseNumber", "p", -1, "Number of pre-release versions to publish")
 	publishCmd.Flags().StringVarP(&version, "version", "v", "", "Version of the package to publish")
 }
