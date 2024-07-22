@@ -79,67 +79,6 @@ func GetConfig() (map[string]string, error) {
 	return result, nil
 }
 
-func WriteConfig(key, value string) error {
-	home, err := os.UserHomeDir()
-	if err != nil {
-		fmt.Println(err)
-		return err
-	}
-	filePath := filepath.Join(home, ".npconfig")
-	file, err := os.OpenFile(filePath, os.O_RDWR|os.O_CREATE|os.O_APPEND, 0666)
-	if err != nil {
-		fmt.Println(err)
-		return err
-	}
-	defer file.Close()
-	fileInfo, err := os.Stat(filePath)
-	if err != nil {
-		fmt.Println(err)
-		return err
-	}
-
-	
-	var newLines []string
-	exists := false
-	if fileInfo.Size() == 0 {
-		fmt.Println("The file is empty.")
-		newLines = append(newLines, fmt.Sprintf("%s=%s", key, value))
-	} else {
-		scanner := bufio.NewScanner(file)
-		for scanner.Scan() {
-			line := scanner.Text()
-			parts := strings.SplitN(line, "=", 2)
-			fmt.Println("parts:", parts)
-			if len(parts) == 2 {
-				currentKey := strings.TrimSpace(parts[0])
-				if currentKey == key {
-					exists = true
-				} else {
-					newLines = append(newLines, fmt.Sprintf("%s=%s", key, value))
-				}
-			}
-		}
-		if exists {
-			newLines = append(newLines, fmt.Sprintf("%s=%s", key, value))
-		}
-		if err := scanner.Err(); err != nil {
-			return err
-		}
-		fmt.Println("newLines:", newLines)
-	}
-	
-	if err := file.Truncate(0); err != nil {
-		return err
-	}
-	if _, err := file.WriteString(strings.Join(newLines, "\n")); err != nil {
-		return err
-	}
-	if err := file.Sync(); err != nil {
-		return err
-	}
-	return nil
-}
-
 func GetPackageJSON() (map[string]string, error) {
 	fileContent, err := os.ReadFile("package.json")
 	if err != nil {

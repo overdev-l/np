@@ -24,34 +24,27 @@ var configCmd = &cobra.Command{
 	},
 	Run: func(cmd *cobra.Command, args []string) {
 		// 如果名称不为空，则写入配置文件
-		fmt.Println("name:", name)
-		fmt.Println("password:", password)
-		fmt.Println("registry:", registry)
+		config, err := util.ReadConfig()
+		if err != nil {
+			fmt.Println(err)
+			os.Exit(1)
+		}
 		if name != "" {
-			fmt.Println("write name")
-			err := util.WriteConfig("username", name)
-			if err != nil {
-				fmt.Println(err)
-				os.Exit(1)
-			}
+			config["username"] = name
 		}
 		if password != "" {
-			err := util.WriteConfig("password", password)
-			if err != nil {
-				fmt.Println(err)
-				os.Exit(1)
-			}
+			config["password"] = password
 		}
 		if registry != "" {
-			err := util.WriteConfig("registry", registry)
-			if err != nil {
-				fmt.Println(err)
-				os.Exit(1)
-			}
+			config["registry"] = registry
 		}
-
 		if name == "" && password == "" && registry == "" {
 			fmt.Println("Must specify either --name or --password or --registry")
+		}
+		err = util.WriteConfig(config)
+		if err != nil {
+			fmt.Println(err)
+			os.Exit(1)
 		}
 	},
 }
