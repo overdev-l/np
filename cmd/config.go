@@ -2,9 +2,10 @@ package cmd
 
 import (
 	"fmt"
-	"github.com/spf13/cobra"
 	"np/util"
 	"os"
+
+	"github.com/spf13/cobra"
 )
 
 var name string
@@ -23,7 +24,11 @@ var configCmd = &cobra.Command{
 	},
 	Run: func(cmd *cobra.Command, args []string) {
 		// 如果名称不为空，则写入配置文件
+		fmt.Println("name:", name)
+		fmt.Println("password:", password)
+		fmt.Println("registry:", registry)
 		if name != "" {
+			fmt.Println("write name")
 			err := util.WriteConfig("username", name)
 			if err != nil {
 				fmt.Println(err)

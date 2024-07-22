@@ -92,33 +92,46 @@ func WriteConfig(key, value string) error {
 		return err
 	}
 	defer file.Close()
-	var lines []string
-	exists := false
-	scanner := bufio.NewScanner(file)
-	for scanner.Scan() {
-		line := scanner.Text()
-		parts := strings.SplitN(line, "=", 2)
-		if len(parts) == 2 {
-			currentKey := strings.TrimSpace(parts[0])
-			currentValue := strings.TrimSpace(parts[1])
-			if currentKey == key {
-				lines = append(lines, fmt.Sprintf("%s=%s", key, value))
-				exists = true
-			} else {
-				lines = append(lines, fmt.Sprintf("%s=%s", key, currentValue))
-			}
-		}
-	}
-	if !exists {
-		lines = append(lines, fmt.Sprintf("%s=%s", key, value))
-	}
-	if err := scanner.Err(); err != nil {
+	fileInfo, err := os.Stat(filePath)
+	if err != nil {
+		fmt.Println(err)
 		return err
 	}
+
+	
+	var newLines []string
+	exists := false
+	if fileInfo.Size() == 0 {
+		fmt.Println("The file is empty.")
+		newLines = append(newLines, fmt.Sprintf("%s=%s", key, value))
+	} else {
+		scanner := bufio.NewScanner(file)
+		for scanner.Scan() {
+			line := scanner.Text()
+			parts := strings.SplitN(line, "=", 2)
+			fmt.Println("parts:", parts)
+			if len(parts) == 2 {
+				currentKey := strings.TrimSpace(parts[0])
+				if currentKey == key {
+					exists = true
+				} else {
+					newLines = append(newLines, fmt.Sprintf("%s=%s", key, value))
+				}
+			}
+		}
+		if exists {
+			newLines = append(newLines, fmt.Sprintf("%s=%s", key, value))
+		}
+		if err := scanner.Err(); err != nil {
+			return err
+		}
+		fmt.Println("newLines:", newLines)
+	}
+	
 	if err := file.Truncate(0); err != nil {
 		return err
 	}
-	if _, err := file.WriteString(strings.Join(lines, "\n")); err != nil {
+	if _, err := file.WriteString(strings.Join(newLines, "\n")); err != nil {
 		return err
 	}
 	if err := file.Sync(); err != nil {
