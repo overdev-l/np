@@ -11,8 +11,13 @@ import (
 // 将配置文件转换为map
 func ReadConfig() (map[string]string, error) {
 	kv := make(map[string]string)
+	home, err := os.UserHomeDir()
+	if err != nil {
+		fmt.Println(err)
+		return kv, err
+	}
 	filename := ".npconfig"
-	filepath := filepath.Join(os.Getenv("HOME"), filename)
+	filepath := filepath.Join(home, filename)
 
 	file, err := os.Open(filepath)
 	if err != nil {
@@ -50,12 +55,17 @@ func ReadConfig() (map[string]string, error) {
 }
 
 func WriteConfig(config map[string]string) error {
+	home, err := os.UserHomeDir()
+	if err != nil {
+		fmt.Println(err)
+		return err
+	}
 	filename := ".npconfig"
-	filepath := filepath.Join(os.Getenv("HOME"), filename)
-	_, err := os.Stat(filepath)
+	filepath := filepath.Join(home, filename)
+	_, err = os.Stat(filepath)
 	if os.IsNotExist(err) {
 		// 文件不存在，创建它
-		file, err := os.Create(filename)
+		file, err := os.Create(filepath)
 		if err != nil {
 			fmt.Println("Error creating file:", err)
 			return nil
@@ -65,7 +75,7 @@ func WriteConfig(config map[string]string) error {
 		fmt.Println("Error checking file:", err)
 		return nil
 	}
-	outputFile, err := os.OpenFile(filename, os.O_WRONLY|os.O_CREATE|os.O_TRUNC, 0644)
+	outputFile, err := os.OpenFile(filepath, os.O_WRONLY|os.O_CREATE|os.O_TRUNC, 0644)
 	if err != nil {
 		fmt.Println("Error opening file:", err)
 		return err
